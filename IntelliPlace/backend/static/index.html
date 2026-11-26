@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>IntelliPlace</title>
+<style>
+:root{--navy:#14284b;--navy-2:#1f4e8c;--accent:#2563eb;--bg:#f3f6fb;--card:#fff;--text:#0f172a;--muted:#64748b;--line:#e2e8f0;--ok:#15803d;--ok-bg:#dcfce7;--bad:#dc2626;--bad-bg:#fee2e2;--warn:#b45309;--warn-bg:#fef3c7;--radius:14px;--shadow:0 1px 2px rgba(15,23,42,.06),0 4px 16px rgba(15,23,42,.06)}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.5}
+h1,h2,h3{margin:0;line-height:1.25}
+h1{font-size:26px}
+button{font:inherit;cursor:pointer}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+
+/* auth */
+.auth{min-height:100vh;display:grid;grid-template-columns:1.05fr 1fr}
+.auth-hero{background:linear-gradient(135deg,var(--navy),var(--navy-2));color:#fff;padding:56px;display:flex;flex-direction:column;justify-content:center}
+.auth-hero h1{font-size:42px;margin-bottom:14px}
+.auth-hero p{opacity:.85;max-width:430px;font-size:17px}
+.auth-hero ul{margin:28px 0 0;padding:0;list-style:none;display:grid;gap:12px}
+.auth-hero li::before{content:"✓  ";color:#93c5fd;font-weight:700}
+.auth-side{display:flex;align-items:center;justify-content:center;padding:32px}
+.auth-box{width:100%;max-width:400px}
+.auth-box h2{font-size:26px;margin-bottom:6px}
+.tabs{display:flex;background:#e9eef6;border-radius:10px;padding:4px;margin:20px 0 4px}
+.tabs button{flex:1;border:0;background:none;padding:9px;border-radius:8px;color:var(--muted);font-weight:600}
+.tabs button.on{background:#fff;color:var(--navy);box-shadow:var(--shadow)}
+
+/* forms */
+.field{margin-top:14px}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px;font-weight:600}
+.field input,.field select,.field textarea{width:100%;padding:11px 12px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;font:inherit}
+.field textarea{min-height:140px;resize:vertical}
+.field input:focus,.field textarea:focus{outline:2px solid #93c5fd;border-color:transparent}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:11px 18px;border-radius:10px;border:1px solid transparent;background:var(--accent);color:#fff;font-weight:600;margin-top:16px;text-decoration:none}
+.btn:hover{background:var(--navy-2)}
+.btn.full{width:100%}
+.btn.ghost{background:#fff;color:var(--navy-2);border-color:var(--line)}
+.btn.ghost:hover{background:#f8fafc}
+.btn.sm{padding:7px 12px;margin-top:0;font-size:14px}
+.btn:disabled{opacity:.6;cursor:wait}
+
+/* shell */
+.app{display:grid;grid-template-columns:250px 1fr;min-height:100vh}
+.sidebar{background:var(--navy);color:#cbd5e1;padding:22px 14px;display:flex;flex-direction:column;gap:3px;position:sticky;top:0;height:100vh;overflow-y:auto}
+.brand{color:#fff;font-size:20px;font-weight:800;padding:4px 12px 18px}
+.brand span{color:#60a5fa}
+.nav{display:flex;align-items:center;gap:12px;padding:9px 14px;border-radius:10px;color:#cbd5e1;border:0;background:none;text-align:left;width:100%;font-size:14px}
+.nav:hover{background:rgba(255,255,255,.08);color:#fff}
+.nav.on{background:rgba(96,165,250,.2);color:#fff;font-weight:600}
+.nav .n{width:22px;height:22px;border-radius:50%;background:rgba(255,255,255,.12);display:grid;place-items:center;font-size:11px;flex:none}
+.nav.on .n{background:#60a5fa}
+.sidebar .spacer{flex:1}
+.user-box{padding:12px 14px;border-top:1px solid rgba(255,255,255,.1);margin-top:10px;font-size:13px}
+.user-box b{color:#fff;display:block;font-size:14px}
+.content{padding:30px 34px;max-width:1140px;width:100%}
+
+/* common */
+.page-head{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:22px}
+.page-head p{margin:6px 0 0;color:var(--muted)}
+.card{background:var(--card);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px}
+.card h3{font-size:16px;margin-bottom:4px}
+.section{margin-top:26px}
+.section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:10px;flex-wrap:wrap}
+.section-head h2{font-size:18px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px}
+.stat .label{color:var(--muted);font-size:13px;font-weight:600}
+.stat .value{font-size:30px;font-weight:800;margin-top:6px;letter-spacing:-.5px}
+.stat .sub{font-size:13px;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px}
+.job{cursor:pointer;display:flex;flex-direction:column;gap:10px;transition:transform .15s,box-shadow .15s}
+.job:hover{transform:translateY(-2px);box-shadow:0 10px 28px rgba(15,23,42,.12)}
+.job .co{color:var(--muted);font-size:13px}
+.job h3{font-size:17px}
+.match{display:flex;align-items:center;gap:10px}
+.bar{height:8px;background:var(--line);border-radius:99px;overflow:hidden;flex:1}
+.bar>i{display:block;height:100%;background:linear-gradient(90deg,#60a5fa,var(--accent));border-radius:99px;transition:width .6s}
+.pct{font-weight:800;min-width:54px;text-align:right;color:var(--navy)}
+.badge{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px}
+.b-ok{background:var(--ok-bg);color:var(--ok)}
+.b-bad{background:var(--bad-bg);color:var(--bad)}
+.b-warn{background:var(--warn-bg);color:var(--warn)}
+.chip{display:inline-block;font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;margin:3px;background:#eef2f7;color:#334155}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}
+.chip.miss{background:var(--bad-bg);color:var(--bad)}
+.toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:18px}
+.search{flex:1;min-width:220px;padding:11px 14px;border:1px solid #cbd5e1;border-radius:10px;background:#fff;font:inherit}
+.seg{display:inline-flex;background:#e9eef6;border-radius:10px;padding:4px;flex-wrap:wrap}
+.seg button{border:0;background:none;padding:8px 14px;border-radius:8px;color:var(--muted);font-weight:600}
+.seg button.on{background:#fff;color:var(--navy);box-shadow:var(--shadow)}
+.nudge{background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;padding:14px 18px;border-radius:12px;display:flex;justify-content:space-between;gap:14px;align-items:center;flex-wrap:wrap;margin-bottom:22px}
+.empty{text-align:center;color:var(--muted);padding:44px 20px}
+.empty b{display:block;color:var(--text);font-size:17px;margin-bottom:4px}
+.skel{background:linear-gradient(90deg,#e9eef5,#f7f9fc,#e9eef5);background-size:200% 100%;animation:sh 1.2s infinite;border-radius:var(--radius);height:130px}
+@keyframes sh{to{background-position:-200% 0}}
+.toasts{position:fixed;right:18px;bottom:18px;display:grid;gap:10px;z-index:50}
+.toast{background:var(--navy);color:#fff;padding:12px 16px;border-radius:10px;box-shadow:var(--shadow);max-width:340px;animation:pop .25s}
+.toast.err{background:var(--bad)}
+.toast.ok{background:var(--ok)}
+@keyframes pop{from{transform:translateY(10px);opacity:0}}
+.back{background:none;border:0;color:var(--accent);padding:0;font-weight:600;margin-bottom:14px}
+.detail-top{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:flex-start}
+.detail-top h1{font-size:30px;margin:6px 0}
+.detail-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}
+.steps{list-style:none;padding:0;margin:0}
+.steps li{display:flex;gap:14px;align-items:center;padding:10px 0;border-bottom:1px dashed var(--line)}
+.steps li:last-child{border-bottom:0}
+.num{width:28px;height:28px;border-radius:50%;background:var(--navy-2);color:#fff;display:grid;place-items:center;font-size:13px;font-weight:700;flex:none}
+.reasons{background:var(--bad-bg);color:#7f1d1d;border-radius:10px;padding:12px 16px;margin-top:14px}
+.reasons ul{margin:6px 0 0;padding-left:18px}
+.ok-note{background:var(--ok-bg);color:#14532d;border-radius:10px;padding:12px 16px;margin-top:14px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.ring{width:110px;height:110px;flex:none}
+.hero-row{display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+.check{display:flex;gap:12px;align-items:flex-start;padding:10px 0;border-bottom:1px dashed var(--line)}
+.check:last-child{border-bottom:0}
+.dot{width:22px;height:22px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:12px;font-weight:700;color:#fff}
+.dot.ok{background:var(--ok)} .dot.bad{background:var(--bad)}
+.prio{font-size:11px;font-weight:700;padding:3px 8px;border-radius:99px;text-transform:uppercase}
+.p-High{background:var(--bad-bg);color:var(--bad)} .p-Medium{background:var(--warn-bg);color:var(--warn)}
+.journey{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.jstep{display:flex;gap:12px;align-items:center;background:#fff;border-radius:12px;padding:14px;box-shadow:var(--shadow);cursor:pointer;border:1px solid transparent}
+.jstep:hover{border-color:#bfdbfe}
+.jstep.done{border-color:#bbf7d0}
+.jstep .dot{width:26px;height:26px}
+.timer{font-weight:800;font-size:20px;color:var(--navy);font-variant-numeric:tabular-nums}
+.opt{display:flex;gap:10px;align-items:center;padding:10px 12px;border:1px solid var(--line);border-radius:10px;margin-top:8px;cursor:pointer;background:#fff}
+.opt:hover{border-color:#93c5fd}
+.opt input{margin:0}
+.opt.sel{border-color:var(--accent);background:#eff6ff}
+.review{padding:12px 0;border-bottom:1px dashed var(--line)}
+.review:last-child{border-bottom:0}
+.drop{border:2px dashed #93c5fd;border-radius:var(--radius);padding:34px;text-align:center;background:#f8fbff}
+.drop input{display:none}
+.spin{width:18px;height:18px;border:3px solid #cbd5e1;border-top-color:var(--accent);border-radius:50%;animation:rot 1s linear infinite;display:inline-block}
+@keyframes rot{to{transform:rotate(360deg)}}
+
+@media (max-width:860px){
+  .auth{grid-template-columns:1fr}
+  .auth-hero{display:none}
+  .app{grid-template-columns:1fr}
+  .sidebar{position:sticky;top:0;height:auto;flex-direction:row;overflow-x:auto;padding:8px;z-index:10;gap:2px;align-items:center}
+  .brand,.spacer,.user-box{display:none}
+  .nav{width:auto;white-space:nowrap;padding:8px 12px}
+  .nav .n{display:none}
+  .content{padding:20px 16px}
+  .two{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  .row2{grid-template-columns:1fr}
+  .detail-stats{grid-template-columns:1fr}
+  .stat .value{font-size:24px}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="toasts" id="toasts"></div>
+
+<script>
+const state = { token: localStorage.getItem("ip_token"), user: null };
+let timerId = null;
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+
+function toast(msg, kind = "") {
+  const t = document.createElement("div");
+  t.className = "toast " + kind;
+  t.textContent = msg;
+  $("#toasts").appendChild(t);
+  setTimeout(() => t.remove(), 3800);
+}
+
+async function api(path, opts = {}) {
+  const headers = {...(opts.headers || {})};
+  if (state.token) headers.Authorization = "Bearer " + state.token;
+  if (opts.body && !(opts.body instanceof FormData)) headers["Content-Type"] = "application/json";
+  const res = await fetch(path, {...opts, headers});
+  let data = {};
+  try { data = await res.json(); } catch (_) {}
+  if (res.status === 401 && state.token && !path.startsWith("/api/auth/")) {
+    logout(); throw new Error("Your session has expired. Please log in again.");
+  }
+  if (!res.ok) {
+    const d = data.detail;
+    throw new Error(Array.isArray(d) ? d.map(x => x.msg).join("; ") : (d || "Something went wrong"));
+  }
+  return data;
+}
+
+function go(path) {
+  if (location.hash === "#/" + path) route();
+  else location.hash = "/" + path;
+}
+
+function logout() {
+  state.token = null; state.user = null;
+  localStorage.removeItem("ip_token");
+  go("login");
+}
+
+function ring(pct, size = 110) {
+  const r = 42, c = 2 * Math.PI * r, p = Math.max(0, Math.min(100, pct));
+  return `<svg width="${size}" height="${size}" viewBox="0 0 100 100" style="flex:none">
+    <circle cx="50" cy="50" r="${r}" fill="none" stroke="#e2e8f0" stroke-width="10"/>
+    <circle cx="50" cy="50" r="${r}" fill="none" stroke="#2563eb" stroke-width="10" stroke-linecap="round"
+      stroke-dasharray="${c * p / 100} ${c}" transform="rotate(-90 50 50)"/>
+    <text x="50" y="57" text-anchor="middle" font-size="19" font-weight="800" fill="#0f172a">${Math.round(p)}%</text></svg>`;
+}
+
+function jobCard(r) {
+  const eligible = r.eligible ? `<span class="badge b-ok">Eligible</span>` : `<span class="badge b-bad">Not eligible</span>`;
+  const chips = (r.matching_skills || []).slice(0, 4).map(s => `<span class="chip ok">${esc(s)}</span>`).join("")
+    + (r.missing_skills || []).slice(0, 2).map(s => `<span class="chip miss">${esc(s)}</span>`).join("");
+  return `<div class="card job" data-go="job/${r.job_id}">
+    <div class="co">${esc(r.company)} · ${esc(r.location)}</div>
+    <h3>${esc(r.title)}</h3>
+    <div class="match"><div class="bar"><i style="width:${r.match_percentage}%"></i></div><div class="pct">${r.match_percentage}%</div></div>
+    <div>${eligible}</div><div>${chips}</div></div>`;
+}
+
+function skeleton(n = 3) { return `<div class="grid">${'<div class="skel"></div>'.repeat(n)}</div>`; }
+function emptyBox(title, text) { return `<div class="card empty"><b>${esc(title)}</b>${esc(text)}</div>`; }
+
+// ---------- auth ----------
+function renderAuth(mode = "login") {
+  $("#root").innerHTML = `
+  <div class="auth">
+    <div class="auth-hero">
+      <h1>IntelliPlace</h1>
+      <p>Find companies that match your skills, see what you are missing, and get ready for placements.</p>
+      <ul>
+        <li>Resume upload with ATS check</li>
+        <li>Best career matches with eligibility check</li>
+        <li>Skill gap, action plan and learning roadmap</li>
+        <li>Mock tests and mock interviews</li>
+      </ul>
+    </div>
+    <div class="auth-side"><div class="auth-box">
+      <h2>${mode === "login" ? "Welcome back" : "Create your account"}</h2>
+      <div class="muted">${mode === "login" ? "Log in to continue" : "Just a few details needed"}</div>
+      <div class="tabs">
+        <button data-tab="login" class="${mode === "login" ? "on" : ""}">Login</button>
+        <button data-tab="register" class="${mode === "register" ? "on" : ""}">Register</button>
+      </div>
+      <form id="authForm">
+        ${mode === "register" ? `<div class="field"><label>Full name</label><input name="full_name" required minlength="2"></div>` : ""}
+        <div class="field"><label>Email</label><input name="email" type="email" required></div>
+        <div class="field"><label>Password${mode === "register" ? " (min 8 characters)" : ""}</label>
+          <input name="password" type="password" required ${mode === "register" ? 'minlength="8"' : ""}></div>
+        ${mode === "register" ? `
+          <div class="field"><label>College</label><input name="college"></div>
+          <div class="row2">
+            <div class="field"><label>Degree</label><input name="degree" placeholder="B.Tech"></div>
+            <div class="field"><label>Branch</label><input name="branch" placeholder="CSE / IT / ECE"></div>
+          </div>
+          <div class="field"><label>Graduation year</label><input name="graduation_year" type="number" placeholder="2027"></div>` : ""}
+        <button class="btn full" id="submitBtn" type="submit">${mode === "login" ? "Login" : "Create account"}</button>
+      </form>
+    </div></div>
+  </div>`;
+
+  document.querySelectorAll(".tabs button").forEach(b => b.onclick = () => renderAuth(b.dataset.tab));
+  $("#authForm").onsubmit = async e => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const btn = $("#submitBtn"); btn.disabled = true;
+    try {
+      let res;
+      if (mode === "login") {
+        res = await api("/api/auth/login", {method: "POST", body: JSON.stringify({
+          email: f.get("email"), password: f.get("password")})});
+      } else {
+        const y = parseInt(f.get("graduation_year"));
+        res = await api("/api/auth/register", {method: "POST", body: JSON.stringify({
+          full_name: f.get("full_name"), email: f.get("email"), password: f.get("password"),
+          college: f.get("college") || "", degree: f.get("degree") || "", branch: f.get("branch") || "",
+          graduation_year: isNaN(y) ? null : y})});
+      }
+      state.token = res.access_token; state.user = res.user;
+      localStorage.setItem("ip_token", state.token);
+      toast(mode === "login" ? "Welcome back!" : "Account created. Let's start with your resume.", "ok");
+      go(mode === "login" ? "dashboard" : "resume");
+    } catch (err) {
+      toast(err.message, "err");
+      btn.disabled = false;
+    }
+  };
+}
+
+// ---------- shell with the diagram's flow as navigation ----------
+const NAV = [
+  {id: "dashboard", label: "Dashboard"},
+  {id: "resume", label: "Resume & ATS Check"},
+  {id: "matches", label: "Best Career Matches"},
+  {id: "gap", label: "Skill Gap Analysis"},
+  {id: "plan", label: "Personalized Action Plan"},
+  {id: "mock", label: "Mock Test"},
+  {id: "interview", label: "Mock Interview"},
+  {id: "roadmap", label: "Learning Roadmap"},
+  {id: "jobs", label: "Jobs & Opportunities"},
+  {id: "progress", label: "Placement Progress"},
+  {id: "profile", label: "Profile"},
+];
+
+function renderShell(active) {
+  const name = state.user ? state.user.full_name : "Student";
+  const idx = {};
+  NAV.forEach((n, i) => idx[n.id] = i + 1);
+  $("#root").innerHTML = `
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">Intelli<span>Place</span></div>
+      ${NAV.map(n => `<button class="nav ${n.id === active ? "on" : ""}" data-go="${n.id}"><span class="n">${idx[n.id]}</span>${n.label}</button>`).join("")}
+      <div class="spacer"></div>
+      <div class="user-box"><b>${esc(name)}</b><button class="nav" id="logoutBtn" style="padding:6px 0">Logout</button></div>
+    </aside>
+    <main class="content" id="page">${skeleton(3)}</main>
+  </div>`;
+  $("#logoutBtn").onclick = () => { logout(); toast("You have been logged out"); };
+  return $("#page");
+}
+
+// ---------- pages ----------
+async function pageDashboard() {
+  const el = renderShell("dashboard");
+  const [prog, recs, plan] = await Promise.all([api("/api/progress"), api("/api/jobs/recommendations"), api("/api/action-plan")]);
+  const next = prog.steps.find(s => !s.done);
+  const eligible = recs.filter(r => r.eligible).length;
+  const firstName = (state.user?.full_name || "Student").split(" ")[0];
+  el.innerHTML = `
+    <div class="page-head"><div><h1>Hi, ${esc(firstName)}</h1><p>Your placement journey at a glance</p></div></div>
+    <div class="card hero-row">
+      ${ring(prog.readiness.score, 120)}
+      <div style="flex:1;min-width:220px">
+        <h3>Placement readiness</h3>
+        <div class="muted" style="margin:4px 0 10px">${esc(prog.readiness.label)}</div>
+        <div class="muted small">${prog.completed} of ${prog.total} steps completed</div>
+        <div class="bar" style="margin-top:8px"><i style="width:${prog.completed / prog.total * 100}%"></i></div>
+      </div>
+      ${next ? `<button class="btn" data-go="${next.link}">Next: ${esc(next.label)} →</button>` : `<span class="badge b-ok">All steps complete</span>`}
+    </div>
+    <div class="stats section">
+      <div class="card stat"><div class="label">Eligible jobs</div><div class="value">${eligible}<span class="muted" style="font-size:18px"> / ${recs.length}</span></div><div class="sub">Based on CGPA, branch and backlogs</div></div>
+      <div class="card stat"><div class="label">Best match</div><div class="value">${recs[0] ? recs[0].match_percentage + "%" : "—"}</div><div class="sub">${recs[0] ? esc(recs[0].title) : "Upload a resume to start"}</div></div>
+      <div class="card stat"><div class="label">Open action items</div><div class="value">${plan.steps.length}</div><div class="sub">See your personalized plan</div></div>
+    </div>
+    <div class="section">
+      <div class="section-head"><h2>Your journey</h2></div>
+      <div class="journey">${prog.steps.map((s, i) => `
+        <div class="jstep ${s.done ? "done" : ""}" data-go="${s.link}">
+          <span class="dot ${s.done ? "ok" : ""}" style="background:${s.done ? "" : "#cbd5e1"}">${s.done ? "✓" : i + 1}</span>
+          <div><b>${esc(s.label)}</b><div class="muted small">${s.done ? "Done" : "Not yet"}</div></div>
+        </div>`).join("")}
+      </div>
+    </div>`;
+}
+
+async function pageResume() {
+  const el = renderShell("resume");
+  const data = await api("/api/resume");
+  if (!data.uploaded) {
+    el.innerHTML = `
+      <div class="page-head"><div><h1>Resume & ATS Check</h1><p>Upload your resume. We will detect your skills and check it against common ATS rules.</p></div></div>
+      <label class="drop" id="drop">
+        <div style="font-size:34px">⬆</div>
+        <h3 style="margin:8px 0 4px">Choose your resume</h3>
+        <div class="muted small">PDF, DOCX or TXT, up to 5 MB</div>
+        <div style="margin-top:14px"><span class="btn sm">Browse file</span></div>
+        <input type="file" id="file" accept=".pdf,.docx,.txt">
+      </label>`;
+    bindUpload();
+    return;
+  }
+  const a = data.ats, info = a.info;
+  el.innerHTML = `
+    <div class="page-head"><div><h1>Resume & ATS Check</h1><p>${esc(data.filename)} · uploaded ${data.uploaded_at ? new Date(data.uploaded_at).toLocaleString() : ""}</p></div>
+      <label class="btn ghost sm" style="cursor:pointer">Upload new resume<input type="file" id="file" accept=".pdf,.docx,.txt" style="display:none"></label></div>
+    <div class="card hero-row">
+      ${ring(a.score, 120)}
+      <div style="flex:1;min-width:220px">
+        <h3>ATS score</h3>
+        <div class="muted">${a.score >= 75 ? "Strong resume. A few small fixes below will make it even better." : a.score >= 50 ? "Decent resume. Fix the items marked below to improve your score." : "Your resume needs several improvements. Start with the failed checks below."}</div>
+        <div class="muted small" style="margin-top:6px">${a.word_count} words · ${data.skills.length} skills detected</div>
+      </div>
+    </div>
+    <div class="two section">
+      <div class="card">
+        <h3>ATS checks</h3>
+        <div style="margin-top:8px">${a.checks.map(c => `
+          <div class="check">
+            <span class="dot ${c.passed ? "ok" : "bad"}">${c.passed ? "✓" : "✕"}</span>
+            <div><b>${esc(c.name)}</b> <span class="muted small">(${c.passed ? c.max : 0}/${c.max})</span>
+              ${c.passed ? "" : `<div class="muted small">${esc(c.tip)}</div>`}</div>
+          </div>`).join("")}</div>
+      </div>
+      <div class="card">
+        <h3>Detected information</h3>
+        <div class="check"><div><span class="muted small">Name</span><br><b>${esc(info.name || "Not found")}</b></div></div>
+        <div class="check"><div><span class="muted small">Email</span><br><b>${esc(info.email || "Not found")}</b></div></div>
+        <div class="check"><div><span class="muted small">Phone</span><br><b>${esc(info.phone || "Not found")}</b></div></div>
+        <div class="check"><div><span class="muted small">Education</span><br><b>${esc(info.education.join(", ") || "Not found")}</b></div></div>
+        <h3 style="margin-top:14px">Skills detected</h3>
+        <div style="margin-top:8px">${data.skills.map(s => `<span class="chip ok">${esc(s)}</span>`).join("") || '<span class="muted">No skills detected. Add a Skills section.</span>'}</div>
+      </div>
+    </div>`;
+  bindUpload();
+}
+
+function bindUpload() {
+  const input = $("#file");
+  input.onchange = async () => {
+    const file = input.files[0];
+    if (!file) return;
+    const form = new FormData();
+    form.append("file", file);
+    toast("Analyzing your resume...");
+    try {
+      await api("/api/resume/upload", {method: "POST", body: form});
+      toast("Resume analyzed", "ok");
+      pageResume();
+    } catch (err) { toast(err.message, "err"); }
+  };
+}
+
+async function pageMatches() {
+  const el = renderShell("matches");
+  const recs = await api("/api/jobs/recommendations");
+  const top = recs.slice(0, 10);
+  el.innerHTML = `
+    <div class="page-head"><div><h1>Best Career Matches</h1><p>Top 10 jobs for your skills. Eligible jobs come first.</p></div></div>
+    ${top.length && top[0].match_percentage > 0 ? `<div class="grid">${top.map(jobCard).join("")}</div>`
+      : emptyBox("No matches yet", "Upload your resume or add skills in your profile to see matches.")}`;
+}
+
+async function pageGap() {
+  const el = renderShell("gap");
+  const recs = await api("/api/jobs/recommendations");
+  const top = recs.slice(0, 5);
+  const counts = {};
+  top.forEach(r => r.missing_skills.forEach(s => counts[s] = (counts[s] || 0) + 1));
+  const ranked = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  el.innerHTML = `
+    <div class="page-head"><div><h1>Skill Gap Analysis</h1><p>What you have, what you are missing, for your top 5 matches</p></div></div>
+    <div class="card">
+      <h3>Most needed skills you are missing</h3>
+      <div style="margin-top:8px">${ranked.length ? ranked.map(([s, n]) => `<span class="chip miss">${esc(s)} · ${n} job${n > 1 ? "s" : ""}</span>`).join("")
+        : '<span class="muted">No gaps. You have the skills for your top matches.</span>'}</div>
+    </div>
+    <div class="section">${top.map(r => `
+      <div class="card" style="margin-bottom:14px;cursor:pointer" data-go="job/${r.job_id}">
+        <div class="section-head"><div><h3>${esc(r.title)}</h3><div class="muted small">${esc(r.company)}</div></div><div class="pct">${r.match_percentage}%</div></div>
+        <div class="bar"><i style="width:${r.match_percentage}%"></i></div>
+        <div style="margin-top:10px"><span class="small muted">You have:</span> ${r.matching_skills.map(s => `<span class="chip ok">${esc(s)}</span>`).join("") || '<span class="muted small">none yet</span>'}</div>
+        <div><span class="small muted">Missing:</span> ${r.missing_skills.map(s => `<span class="chip miss">${esc(s)}</span>`).join("") || '<span class="muted small">none</span>'}</div>
+      </div>`).join("") || emptyBox("No jobs to analyze", "Add skills to your profile first.")}</div>`;
+}
+
+async function pagePlan() {
+  const el = renderShell("plan");
+  const data = await api("/api/action-plan");
+  el.innerHTML = `
+    <div class="page-head"><div><h1>Personalized Action Plan</h1><p>Do these in order. High priority first.</p></div></div>
+    <div class="card">${data.steps.map((s, i) => `
+      <div class="check">
+        <span class="num">${i + 1}</span>
+        <div style="flex:1"><div><span class="prio p-${s.priority}">${s.priority}</span> <b>${esc(s.title)}</b></div>
+          <div class="muted small">${esc(s.detail)}</div></div>
+        <button class="btn ghost sm" data-go="${s.link}">Open</button>
+      </div>`).join("")}</div>`;
+}
+
+function aiBanner(enabled) {
+  return enabled ? "" : `<div class="nudge"><span>AI questions are off. Add your Gemini API key to <b>backend/.env</b> and restart the app. Questions come from the question bank for now.</span></div>`;
+}
+
+function sourceBadge(source) {
+  return source === "ai" ? `<span class="badge b-ok">AI-generated</span>` : `<span class="badge b-warn">Question bank</span>`;
+}
+
+async function pageMock() {
+  const el = renderShell("mock");
+  const [cats, history, ai] = await Promise.all([
+    api("/api/mock-test/categories"), api("/api/mock-test/history"), api("/api/ai/status")]);
+  const avg = history.length ? Math.round(history.reduce((a, h) => a + h.score, 0) / history.length) : null;
+  el.innerHTML = `
+    <div class="page-head"><div><h1>Mock Test</h1><p>Timed MCQ tests. You get 1 minute per question.</p></div>
+      ${avg !== null ? `<span class="badge b-ok">Average score: ${avg}%</span>` : ""}</div>
+    ${aiBanner(ai.ai_enabled)}
+    <div class="grid">${cats.map(c => `
+      <div class="card">
+        <h3>${esc(c.name)}</h3>
+        <div class="muted small" style="margin:4px 0 10px">${c.questions} questions · ${c.questions} minutes</div>
+        <button class="btn sm" data-start="${c.id}">Start test</button>
+      </div>`).join("")}</div>
+    <div class="section card">
+      <h3>Your attempts</h3>
+      <div style="margin-top:8px">${history.length ? history.slice().reverse().map(h => `
+        <div class="check"><div style="flex:1"><b>${esc(h.category)}</b></div>
+          <span class="badge ${h.score >= 60 ? "b-ok" : "b-warn"}">${h.score}% (${h.correct}/${h.total})</span></div>`).join("")
+        : '<div class="muted">No attempts yet.</div>'}</div>
+    </div>`;
+  el.querySelectorAll("[data-start]").forEach(b => b.onclick = () => startMock(b.dataset.start));
+}
+
+async function startMock(category) {
+  const el = $("#page");
+  const data = await api(`/api/mock-test/questions?category=${encodeURIComponent(category)}`);
+  const qs = data.questions;
+  const answers = {};
+  let left = qs.length * 60;
+  el.innerHTML = `
+    <div class="page-head"><div><h1>Mock test: ${esc(category)}</h1><p>Select one answer per question</p></div>
+      <div style="display:flex;gap:12px;align-items:center">${sourceBadge(data.source)}<div class="timer" id="clock"></div></div></div>
+    ${data.note ? `<div class="nudge"><span>${esc(data.note)}</span></div>` : ""}
+    <div id="qs">${qs.map((q, i) => `
+      <div class="card" style="margin-bottom:14px">
+        <b>${i + 1}. ${esc(q.question)}</b>
+        ${q.options.map((o, j) => `<label class="opt" data-q="${q.id}" data-o="${j}"><input type="radio" name="q${q.id}" value="${j}"> ${esc(o)}</label>`).join("")}
+      </div>`).join("")}
+    </div>
+    <button class="btn" id="submitMock">Submit test</button>`;
+  const submitMock = async () => {
+    clearInterval(timerId);
+    try {
+      const res = await api("/api/mock-test/submit", {method: "POST", body: JSON.stringify({set_id: data.set_id, answers})});
+      el.innerHTML = `
+        <div class="page-head"><div><h1>Result: ${esc(res.name)}</h1><p>${res.correct} of ${res.total} correct</p></div>
+          <button class="btn ghost" data-go="mock">Back to mock tests</button></div>
+        <div class="card hero-row">${ring(res.score, 110)}
+          <div><h3>${res.score >= 60 ? "Good work" : "Keep practicing"}</h3>
+          <div class="muted">${res.score >= 60 ? "You are on track in this topic." : "Review the answers below and retake the test."}</div></div></div>
+        <div class="card section">${res.review.map((r, i) => `
+          <div class="review"><b>${i + 1}. ${esc(r.question)}</b>
+            <div class="small" style="margin-top:4px">Your answer: <span style="color:${r.is_correct ? "var(--ok)" : "var(--bad)"}">${esc(r.your_answer)}</span></div>
+            ${r.is_correct ? "" : `<div class="small">Correct answer: <b>${esc(r.correct_answer)}</b></div>`}</div>`).join("")}</div>`;
+    } catch (err) { toast(err.message, "err"); }
+  };
+  const tick = () => {
+    const m = String(Math.floor(left / 60)).padStart(2, "0"), sec = String(left % 60).padStart(2, "0");
+    const c = $("#clock"); if (c) c.textContent = `${m}:${sec}`;
+    if (left <= 0) { submitMock(); return; }
+    left--;
+  };
+  tick();
+  clearInterval(timerId);
+  timerId = setInterval(tick, 1000);
+  el.querySelectorAll(".opt").forEach(l => l.onclick = () => {
+    answers[l.dataset.q] = parseInt(l.dataset.o);
+    el.querySelectorAll(`.opt[data-q="${l.dataset.q}"]`).forEach(x => x.classList.toggle("sel", x === l));
+  });
+  $("#submitMock").onclick = submitMock;
+}
+
+async function pageInterview() {
+  const el = renderShell("interview");
+  const data = await api("/api/interview/questions");
+  const qs = data.questions;
+  let idx = 0; const scores = [];
+  const draw = () => {
+    if (idx >= qs.length) {
+      const avg = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
+      el.innerHTML = `
+        <div class="page-head"><div><h1>Interview practice complete</h1><p>You answered ${qs.length} questions</p></div></div>
+        <div class="card hero-row">${ring(avg, 110)}<div><h3>Average score</h3>
+          <div class="muted">Practice daily, and speak your answers aloud too.</div></div>
+          <button class="btn ghost" data-go="interview" style="margin-left:auto">Practice again</button></div>`;
+      return;
+    }
+    const q = qs[idx];
+    el.innerHTML = `
+      <div class="page-head"><div><h1>Mock Interview</h1><p>Question ${idx + 1} of ${qs.length}</p></div>${sourceBadge(data.source)}</div>
+      ${data.note ? `<div class="nudge"><span>${esc(data.note)}</span></div>` : ""}
+      <div class="card">
+        <h3 style="font-size:19px;margin-bottom:12px">${esc(q.question)}</h3>
+        <div class="field"><label>Your answer</label><textarea id="ans" placeholder="Type your answer here, in 3 to 5 sentences."></textarea></div>
+        <button class="btn" id="evalBtn">Get feedback</button>
+      </div>
+      <div id="fb"></div>`;
+    $("#evalBtn").onclick = async () => {
+      const text = $("#ans").value.trim();
+      if (!text) { toast("Please type an answer first", "err"); return; }
+      $("#evalBtn").disabled = true;
+      try {
+        const r = await api("/api/interview/evaluate", {method: "POST", body: JSON.stringify({
+          set_id: data.set_id, question_id: q.id, answer: text})});
+        scores.push(r.score);
+        $("#fb").innerHTML = `
+          <div class="card section hero-row">${ring(r.score, 90)}
+            <div style="flex:1"><h3>Feedback</h3><div class="muted" style="margin-top:4px">${esc(r.feedback)}</div></div>
+            <button class="btn" id="nextQ">${idx + 1 < qs.length ? "Next question →" : "Finish"}</button></div>`;
+        $("#nextQ").onclick = () => { idx++; draw(); };
+      } catch (err) { toast(err.message, "err"); $("#evalBtn").disabled = false; }
+    };
+  };
+  draw();
+}
+
+async function pageRoadmap() {
+  const el = renderShell("roadmap");
+  const data = await api("/api/roadmap");
+  el.innerHTML = `
+    <div class="page-head"><div><h1>Learning Roadmap</h1><p>Skills to learn, in order of how often your top matches need them</p></div></div>
+    ${data.weeks.length ? `<div class="card">${data.weeks.map(w => `
+      <div class="check">
+        <span class="num" style="width:auto;padding:0 10px;border-radius:99px">Week ${w.weeks}</span>
+        <div style="flex:1"><h3>${esc(w.focus)}</h3><div class="muted small" style="margin-bottom:6px">${esc(w.why)}</div>
+          <ul style="margin:0;padding-left:18px">${w.tasks.map(t => `<li>${esc(t)}</li>`).join("")}</ul></div>
+      </div>`).join("")}</div>`
+      : emptyBox("Roadmap is empty", data.message || "Upload your resume to generate a roadmap.")}`;
+}
+
+async function pageJobs() {
+  const el = renderShell("jobs");
+  const [recs, saved] = await Promise.all([api("/api/jobs/recommendations"), api("/api/jobs/saved")]);
+  const savedIds = new Set(saved.map(j => j.id));
+  let query = "", filter = "all";
+  const draw = () => {
+    const q = query.trim().toLowerCase();
+    const list = recs.filter(r =>
+      (filter === "all" || (filter === "eligible" && r.eligible) || (filter === "saved" && savedIds.has(r.job_id))) &&
+      (!q || r.title.toLowerCase().includes(q) || r.company.toLowerCase().includes(q) || r.location.toLowerCase().includes(q)));
+    $("#jobList").innerHTML = list.length ? list.map(jobCard).join("")
+      : emptyBox("No jobs found", filter === "saved" ? "You have not saved any jobs yet." : "Try a different search or filter.");
+    $("#count").textContent = list.length + " jobs";
+    el.querySelectorAll("[data-filter]").forEach(b => b.classList.toggle("on", b.dataset.filter === filter));
+  };
+  el.innerHTML = `
+    <div class="page-head"><div><h1>Jobs & Opportunities</h1><p>Browse all jobs, filter by eligibility or saved jobs</p></div></div>
+    <div class="toolbar">
+      <input class="search" id="q" placeholder="Search by title, company or city">
+      <div class="seg">
+        <button data-filter="all">All</button>
+        <button data-filter="eligible">Eligible only</button>
+        <button data-filter="saved">Saved</button>
+      </div>
+      <span class="muted" id="count"></span>
+    </div>
+    <div class="grid" id="jobList"></div>`;
+  $("#q").oninput = e => { query = e.target.value; draw(); };
+  el.querySelectorAll("[data-filter]").forEach(b => b.onclick = () => { filter = b.dataset.filter; draw(); });
+  draw();
+}
+
+async function pageJob(id) {
+  const el = renderShell("jobs");
+  const j = await api("/api/jobs/" + id);
+  const a = j.student_analysis;
+  const reasons = j.ineligibility_reasons.length
+    ? `<div class="reasons"><b>Why not eligible:</b><ul>${j.ineligibility_reasons.map(r => `<li>${esc(r)}</li>`).join("")}</ul></div>`
+    : `<div class="ok-note">You are eligible for this job.</div>`;
+  const learn = a.learning_sequence.length
+    ? `<ol class="steps">${a.learning_sequence.map((s, i) => `<li><span class="num">${i + 1}</span><span>${esc(s)}</span></li>`).join("")}</ol>`
+    : `<div class="ok-note">You have all the required skills.</div>`;
+  el.innerHTML = `
+    <button class="back" data-go="jobs">← Back to jobs</button>
+    <div class="card">
+      <div class="detail-top">
+        <div>
+          <div class="muted">${esc(j.company)} · ${esc(j.location)}</div>
+          <h1>${esc(j.title)}</h1>
+          <p class="muted" style="max-width:600px">${esc(j.description)}</p>
+          <div style="margin-top:6px"><span class="badge ${j.eligible ? "b-ok" : "b-bad"}">${j.eligible ? "Eligible" : "Not eligible"}</span>
+            <span class="muted small" style="margin-left:8px">Min CGPA ${j.min_cgpa} · Max backlogs ${j.max_backlogs} · Branch: ${esc(j.branches.join(", "))}</span></div>
+        </div>
+        <button class="btn ${j.saved ? "ghost" : ""}" id="saveBtn">${j.saved ? "★ Saved (click to remove)" : "☆ Save job"}</button>
+      </div>
+      ${reasons}
+      <div class="detail-stats">
+        <div class="card stat"><div class="label">Skill coverage</div><div class="value">${a.skill_coverage}%</div></div>
+        <div class="card stat"><div class="label">Matched</div><div class="value">${a.matched_skills.length}</div></div>
+        <div class="card stat"><div class="label">Missing</div><div class="value">${a.missing_skills.length}</div></div>
+      </div>
+    </div>
+    <div class="two section">
+      <div class="card">
+        <h3>Skill gap</h3>
+        <div class="match" style="margin:10px 0 16px"><div class="bar"><i style="width:${a.skill_coverage}%"></i></div><div class="pct">${a.skill_coverage}%</div></div>
+        <div class="muted small" style="margin-bottom:6px">You have</div>
+        <div>${a.matched_skills.map(s => `<span class="chip ok">${esc(s)}</span>`).join("") || '<span class="muted">None yet</span>'}</div>
+        <div class="muted small" style="margin:12px 0 6px">Missing</div>
+        <div>${a.missing_skills.map(s => `<span class="chip miss">${esc(s)}</span>`).join("") || '<span class="muted">None</span>'}</div>
+      </div>
+      <div class="card"><h3>Learning path</h3><div class="muted" style="margin-bottom:8px">Learn in this order</div>${learn}</div>
+    </div>`;
+  $("#saveBtn").onclick = async () => {
+    try {
+      if (j.saved) await api(`/api/jobs/${id}/save`, {method: "DELETE"});
+      else await api(`/api/jobs/${id}/save`, {method: "POST"});
+      toast(j.saved ? "Removed from saved" : "Job saved", "ok");
+      route();
+    } catch (err) { toast(err.message, "err"); }
+  };
+}
+
+async function pageProgress() {
+  const el = renderShell("progress");
+  const prog = await api("/api/progress");
+  const r = prog.readiness;
+  const success = r.score >= 75;
+  el.innerHTML = `
+    <div class="page-head"><div><h1>Placement Progress</h1><p>Track your readiness across all modules</p></div></div>
+    ${success ? `<div class="card" style="background:linear-gradient(135deg,#14532d,#15803d);color:#fff;margin-bottom:20px">
+      <h2>Placement Success</h2><div style="opacity:.9;margin-top:4px">${esc(r.label)}</div></div>` : ""}
+    <div class="card hero-row">${ring(r.score, 120)}
+      <div style="flex:1"><h3>Overall readiness</h3><div class="muted">${esc(r.label)}</div></div></div>
+    <div class="two section">
+      <div class="card">
+        <h3>Readiness breakdown</h3>
+        <div style="margin-top:10px">${r.components.map(c => `
+          <div style="margin-bottom:14px"><div class="section-head" style="margin-bottom:6px"><span>${esc(c.name)} <span class="muted small">(${c.weight}%)</span></span><b>${c.value}%</b></div>
+          <div class="bar"><i style="width:${c.value}%"></i></div></div>`).join("")}</div>
+      </div>
+      <div class="card">
+        <h3>Steps</h3>
+        <div style="margin-top:8px">${prog.steps.map(s => `
+          <div class="check" data-go="${s.link}" style="cursor:pointer">
+            <span class="dot ${s.done ? "ok" : ""}" style="${s.done ? "" : "background:#cbd5e1"}">${s.done ? "✓" : ""}</span>
+            <div style="flex:1">${esc(s.label)}</div>
+            <span class="badge ${s.done ? "b-ok" : "b-warn"}">${s.done ? "Done" : "Pending"}</span>
+          </div>`).join("")}</div>
+        <div class="muted small" style="margin-top:10px">${prog.completed} of ${prog.total} completed</div>
+      </div>
+    </div>`;
+}
+
+async function pageProfile() {
+  const el = renderShell("profile");
+  const p = await api("/api/profile");
+  el.innerHTML = `
+    <div class="page-head"><div><h1>Your profile</h1><p>More details mean better recommendations</p></div></div>
+    <div class="card hero-row" style="margin-bottom:20px">
+      ${ring(p.profile_completion)}
+      <div><h3>Profile completion</h3><div class="muted">Completion grows as you add skills, CGPA, branch and career interests.</div></div>
+    </div>
+    <form class="card" id="pForm">
+      <div class="row2">
+        <div class="field"><label>CGPA (0 - 10)</label><input name="cgpa" type="number" step="0.01" min="0" max="10" value="${p.cgpa ?? ""}"></div>
+        <div class="field"><label>Backlogs</label><input name="backlogs" type="number" min="0" value="${p.backlogs ?? 0}"></div>
+        <div class="field"><label>Branch</label><input name="branch" placeholder="CSE / IT / ECE / AI&DS" value="${esc(p.branch)}"></div>
+        <div class="field"><label>Graduation year</label><input name="graduation_year" type="number" value="${p.graduation_year ?? ""}"></div>
+      </div>
+      <div class="field"><label>Skills (comma separated)</label>
+        <input name="skills" placeholder="Python, SQL, Pandas" value="${esc((p.skills || []).join(", "))}"></div>
+      <div class="field"><label>Career interests</label>
+        <input name="career_interests" placeholder="data analysis, machine learning" value="${esc(p.career_interests)}"></div>
+      <button class="btn" type="submit">Save profile</button>
+    </form>`;
+  $("#pForm").onsubmit = async e => {
+    e.preventDefault();
+    const f = new FormData(e.target);
+    const body = {
+      skills: (f.get("skills") || "").split(",").map(s => s.trim()).filter(Boolean),
+      career_interests: f.get("career_interests") || "",
+      backlogs: parseInt(f.get("backlogs") || "0"),
+    };
+    const cgpa = parseFloat(f.get("cgpa")); if (!isNaN(cgpa)) body.cgpa = cgpa;
+    const yr = parseInt(f.get("graduation_year")); if (!isNaN(yr)) body.graduation_year = yr;
+    if ((f.get("branch") || "").trim()) body.branch = f.get("branch").trim();
+    try {
+      await api("/api/profile", {method: "PUT", body: JSON.stringify(body)});
+      toast("Profile saved", "ok");
+      route();
+    } catch (err) { toast(err.message, "err"); }
+  };
+}
+
+// ---------- router ----------
+const PAGES = {
+  dashboard: pageDashboard, resume: pageResume, matches: pageMatches, gap: pageGap, plan: pagePlan,
+  mock: pageMock, interview: pageInterview, roadmap: pageRoadmap, jobs: pageJobs, progress: pageProgress,
+  profile: pageProfile,
+};
+
+async function route() {
+  clearInterval(timerId);
+  const path = location.hash.replace(/^#\/?/, "") || "dashboard";
+  const [page, arg] = path.split("/");
+  if (!state.token) { renderAuth(page === "register" ? "register" : "login"); return; }
+  if (page === "login" || page === "register") { go("dashboard"); return; }
+  try {
+    if (page === "job" && arg) await pageJob(arg);
+    else if (PAGES[page]) await PAGES[page]();
+    else go("dashboard");
+  } catch (err) {
+    const el = $("#page") || $("#root");
+    el.innerHTML = emptyBox("Something went wrong", err.message);
+  }
+}
+
+// one delegated handler for every [data-go] element (nav, buttons, cards)
+document.addEventListener("click", e => {
+  const el = e.target.closest("[data-go]");
+  if (el && !e.target.closest("input")) { e.preventDefault(); go(el.dataset.go); }
+});
+window.addEventListener("hashchange", route);
+
+(async function init() {
+  if (state.token) {
+    try { state.user = await api("/api/auth/me"); }
+    catch (_) { state.token = null; localStorage.removeItem("ip_token"); }
+  }
+  if (!location.hash) location.hash = state.token ? "/dashboard" : "/login";
+  else route();
+})();
+</script>
+</body>
+</html>
